@@ -36,7 +36,6 @@ def run(device, args, save_dir, file_name):
 
     fold_list, metrics_results = [], []
     for fold in range(Fold_numbers):
-
         TEST_SPLIT_INDEX = fold
         print('-' * 50 + '\n' + 'Fold: %s' % fold)
         train_features, train_labels, train_partial_labels, test_features, test_labels = split_data_set_by_idx(
