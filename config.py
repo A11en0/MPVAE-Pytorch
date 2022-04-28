@@ -10,15 +10,13 @@ class Args:
         self.DATA_SET_NAME = 'Emotions'
         self.epochs = 5
         self.show_epoch = 1
-        # self.epoch_used_for_final_result = 4
         self.model_save_epoch = 20
         self.model_save_dir = 'model_save_dir'
-        self.resume = False
         self.using_lp = False
 
         self.neighbors_num = 10
         self.no_verbose = True
-        self.using_lp = False
+        self.using_lp = False  # label propagation for label de-noise
 
         self.is_test_in_train = True
         self.batch_size = 512
@@ -41,8 +39,6 @@ class Args:
         self.n_train_sample = 256
         self.nll_coeff = 0.5
         self.c_coeff = 0.5
-
-        self.embedding_dim = 256
 
         self.keep_prob = 0.5
         self.scale_coeff = 1.0

@@ -17,7 +17,6 @@ def run(device, args, save_dir, file_name):
     print('seed:\t', args.seed)
     print('dataset:\t', args.DATA_SET_NAME)
     print('latent dim:\t', args.latent_dim)
-    print('embedding dim:\t', args.embedding_dim)
     print('optimizer:\t Adam')
     print('*' * 30)
 
@@ -53,7 +52,7 @@ def run(device, args, save_dir, file_name):
         view_feature_dim_list = [train_features[code].shape[1] for code in view_code_list]
         feature_dim = reduce(lambda x, y: x + y, view_feature_dim_list)
 
-        # 设置 latent_dim 为标签数
+        # get feature_dim and label_dim
         args.feature_dim = feature_dim
         args.label_dim = train_labels.shape[1]
 
