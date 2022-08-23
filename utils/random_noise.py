@@ -16,7 +16,7 @@ def random_noise(Y, noise_num=3):
 
 def random_noise_p_r(Y, noise_rate, noise_num=3):
     N, M = Y.shape
-    noise_nums = np.zeros((N, 1))
+    noise_nums = np.zeros([N, 1])
     noise_num_p = int(N * noise_rate)
     rand_idx_p = np.random.permutation(N)
     choose_idx_p = rand_idx_p[:noise_num_p]

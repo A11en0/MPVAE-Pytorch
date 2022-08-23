@@ -54,7 +54,7 @@ class Trainer(object):
 
         self.lr_s = torch.optim.lr_scheduler.StepLR(self.opti, step_size=10, gamma=0.9)
 
-    def fit(self, train_loader, train_features, train_labels, test_features, test_labels, fold):
+    def fit(self, train_loader, train_features, train_labels, test_features, test_labels):
         loss_list = []
         best_F1, best_epoch = 0.0, 0.0
 

@@ -9,10 +9,6 @@ from sklearn import preprocessing
 from torch.utils.data import Dataset
 import torch
 
-import h5py
-
-from utils.random_noise import random_noise, random_noise_p_r
-
 
 class Dataset(Dataset):
     def __init__(self, features, labels, device='cpu'):
@@ -109,7 +105,7 @@ def read_mat_data(file_name, need_zscore=True):
     return views_features, labels
 
 def save_results(save_name, metrics_results, fold_list, time_usage, args):
-    rets = np.zeros((Fold_numbers, args.epochs, 15))  # 11 metrics
+    rets = np.zeros([Fold_numbers, args.epochs, 15])  # 11 metrics
     for fold, li_fold in enumerate(fold_list):
         for i, epoch in enumerate(li_fold):
             for j, key in enumerate(li_fold[i]):

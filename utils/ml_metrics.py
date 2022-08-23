@@ -6,29 +6,28 @@ from sklearn.metrics import coverage_error
 FMT = '%.4f'
 
 def all_metrics(outputs, pre_labels, true_labels):
-    metrics_name = ['hamming_loss', 'avg_pre', 'one_error', 'ranking_loss', 'coverage', 'coverage_gt', 'micro_f1',
+    metrics_name = ['hamming_loss', 'avg_pre', 'one_error', 'ranking_loss', 'coverage', '_example_f1', 'micro_f1',
                    'macro_f1', 'micro_precision', 'macro_precision', 'micro_recall', 'macro_recall', 'micro_avg_auc',
-                   'macro_avg_auc', 'subset_accuracy']
+                   'macro_avg_auc', 'subset_accuracy', 'coverage_gt']
 
     hamming_loss = HammingLoss(pre_labels, true_labels)
     avg_precision = AveragePrecision(outputs, true_labels)
     one_error = OneError(outputs, true_labels)
     ranking_loss = RankingLoss(outputs, true_labels)
     coverage = Coverage(outputs, true_labels)
-    # macrof1 = MacroF1(pre_labels, true_labels)
-    # microf1 = MicroF1(pre_labels, true_labels)
     micro_precision, micro_recall, micro_f1, macro_precision, macro_recall, macro_f1 = \
         bipartition_scores(true_labels, pre_labels)
-
     _coverage_gt = coverage_greater(true_labels, pre_labels, outputs)
-    _f1 = f1(true_labels, pre_labels, outputs)
+    _example_f1 = f1(true_labels, pre_labels, outputs)
     _subset_accuracy = subset_accuracy(true_labels, pre_labels, outputs)
     _micro_avg_auc = micro_averaging_auc(true_labels, pre_labels, outputs)
     _macro_avg_auc = macro_averaging_auc(true_labels, pre_labels, outputs)
 
-    metrics_res = [hamming_loss, avg_precision, one_error, ranking_loss, coverage, _coverage_gt, micro_f1,
+    # macrof1 = MacroF1(pre_labels, true_labels)
+    # microf1 = MicroF1(pre_labels, true_labels)
+    metrics_res = [hamming_loss, avg_precision, one_error, ranking_loss, coverage, _example_f1, micro_f1,
                    macro_f1, micro_precision, macro_precision, micro_recall, macro_recall, _micro_avg_auc,
-                   _macro_avg_auc, _subset_accuracy]
+                   _macro_avg_auc, _subset_accuracy, _coverage_gt]
     return dict(zip(metrics_name, metrics_res))
 
 def HammingLoss(pre_labels, true_labels):
@@ -200,7 +199,7 @@ def bipartition_scores(labels, predictions):
         labels: Labels tensor, int32 - [batch_size, NUM_LABELS].
       Returns:
         bipartiation: an array with micro_precision, micro_recall, micro_f1,macro_precision, macro_recall, macro_f1"""
-    sum_cm = np.zeros((4))
+    sum_cm = np.zeros([4])
     macro_precision = 0
     macro_recall = 0
     for i in range(labels.shape[1]):

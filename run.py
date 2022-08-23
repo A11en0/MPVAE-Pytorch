@@ -22,20 +22,17 @@ def run(device, args, save_dir, file_name):
 
     # setting random seeds
     init_random_seed(args.seed)
-
     save_name = save_dir + file_name
-
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
-
-    if os.path.exists(save_name):
-        return
+    # if os.path.exists(save_name):
+    #     return
 
     features, labels, idx_list = load_mat_data(os.path.join(args.DATA_ROOT, args.DATA_SET_NAME + '.mat'), fold_num=Fold_numbers,
                                                need_zscore=True)
 
     fold_list, metrics_results = [], []
-    rets = np.zeros((Fold_numbers, 15))   # last col: time
+    rets = np.zeros([Fold_numbers, 15])   # last col: time
     start = time.time()
     for fold in range(Fold_numbers):
         TEST_SPLIT_INDEX = fold
@@ -48,21 +45,17 @@ def run(device, args, save_dir, file_name):
         train_data_loader = DataLoader(train_dataset, batch_size=args.batch_size, shuffle=True, pin_memory=False, num_workers=0)
 
         # building the model
+        args.feature_dim = train_features.shape[1]
         args.label_dim = train_labels.shape[1]
         model = VAE(args).to(device)
 
         # training
         # print(model)
         trainer = Trainer(model, args, device)
-        loss_list = trainer.fit(train_data_loader, train_features, train_labels, test_features, test_labels, fold)
+        loss_list = trainer.fit(train_data_loader, train_features, train_labels, test_features, test_labels)
 
         fold_list.append(loss_list)
-
         metrics_results, _ = test(model, test_features, test_labels, None, device, is_eval=True)
-
-        # for i, key in enumerate(metrics_results):
-        #     print(f"{key}: {metrics_results[key]:.4f}", end='\t')
-        #     loss_list[epoch][i] = metrics_results[key]
 
         for i, key in enumerate(metrics_results):
             rets[fold][i] = metrics_results[key]
@@ -81,14 +74,17 @@ if __name__ == '__main__':
     # datanames = ['Emotions', 'Scene', 'Yeast', 'Pascal', 'Iaprtc12', 'Corelq', 'Mirflickr', 'Espgame']
     # label_nums = [6, 6, 14, 20, 291, 260, 38, 268]
 
-    # datanames = ['Emotions']
-    datanames = ['Scene']
+    # datanames = ['emotions']
+    # datanames = ['scene']
     # datanames = ['Yeast']
     # datanames = ['Pascal']
     # datanames = ['Iaprtc12']
     # datanames = ['Corel5k']
-    # datanames = ['Mirflickr']
     # datanames = ['Espgame']
+    # datanames = ['sider_data']
+    # datanames = ['fish_data']
+
+    datanames = ['mirflickr_data']
 
     # param_grid = {
     #     'latent_dim': [6],

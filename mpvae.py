@@ -40,7 +40,7 @@ class VAE(nn.Module):
                                   np.sqrt(6.0 / (args.label_dim + args.z_dim)), (args.label_dim, args.z_dim))),
                                         requires_grad=False)
         elif args.residue_sigma == 'zero':
-            r_sqrt_sigma = nn.Parameter(torch.zeros((args.label_dim, args.z_dim)), requires_grad=False)
+            r_sqrt_sigma = nn.Parameter(torch.zeros([args.label_dim, args.z_dim]), requires_grad=False)
         else:
             r_sqrt_sigma = nn.Parameter(torch.from_numpy(
                 np.random.uniform(-np.sqrt(6.0 / (args.label_dim + args.z_dim)),
@@ -204,7 +204,7 @@ def estimating_label_correlation_matrix(Y_P):
     num_class = Y_P.shape[1]
     n = Y_P.shape[0]
 
-    R = np.zeros((num_class, num_class))
+    R = np.zeros([num_class, num_class])
     for i in range(num_class):
         for j in range(num_class):
             if i == j:
