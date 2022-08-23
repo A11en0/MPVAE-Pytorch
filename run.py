@@ -1,5 +1,7 @@
 # -*- coding: UTF-8 -*-
 import os
+import time
+
 import torch
 import numpy as np
 from torch.utils.data import DataLoader
@@ -7,7 +9,7 @@ from torch.utils.data import DataLoader
 from config import *
 from mpvae import VAE
 from train import test, Trainer
-from utils.common_tools import split_data_set_by_idx, load_mat_data, init_random_seed, Dataset
+from utils.common_tools import split_data_set_by_idx, load_mat_data, init_random_seed, Dataset, save_results
 
 
 def run(device, args, save_dir, file_name):
@@ -33,6 +35,8 @@ def run(device, args, save_dir, file_name):
                                                need_zscore=True)
 
     fold_list, metrics_results = [], []
+    rets = np.zeros((Fold_numbers, 15))   # last col: time
+    start = time.time()
     for fold in range(Fold_numbers):
         TEST_SPLIT_INDEX = fold
         print('-' * 50 + '\n' + 'Fold: %s' % fold)
@@ -48,7 +52,7 @@ def run(device, args, save_dir, file_name):
         model = VAE(args).to(device)
 
         # training
-        print(model)
+        # print(model)
         trainer = Trainer(model, args, device)
         loss_list = trainer.fit(train_data_loader, train_features, train_labels, test_features, test_labels, fold)
 
@@ -57,33 +61,14 @@ def run(device, args, save_dir, file_name):
         metrics_results, _ = test(model, test_features, test_labels, None, device, is_eval=True)
 
         # for i, key in enumerate(metrics_results):
-        #     rets[fold][i] = metrics_results[key]
+        #     print(f"{key}: {metrics_results[key]:.4f}", end='\t')
+        #     loss_list[epoch][i] = metrics_results[key]
 
-    rets = np.zeros((Fold_numbers, args.epochs, 11))  # 11 metrics
-    for fold, li_fold in enumerate(fold_list):
-        for i, epoch in enumerate(li_fold):
-            for j, key in enumerate(li_fold[i]):
-                rets[fold][i][j] = li_fold[i][key]
+        for i, key in enumerate(metrics_results):
+            rets[fold][i] = metrics_results[key]
 
-    means = np.mean(rets, axis=0)
-    stds = np.std(rets, axis=0)
-    _index = np.argsort(means[:, 6])
-
-    mean_choose = means[_index][-1, :]
-    std_choose = stds[_index][-1, :]
-
-    print("\n------------summary--------------")
-    print("Best Epoch: ", _index[-1])
-    metrics_list = list(metrics_results.keys())
-
-    with open(save_name, "w") as f:
-        for i, _ in enumerate(mean_choose):
-            print("{metric}\t{means:.4f}±{std:.4f}".format(metric=metrics_list[i], means=mean_choose[i],
-                                                           std=std_choose[i]))
-            f.write("{metric}\t{means:.4f}±{std:.4f}".format(metric=metrics_list[i], means=mean_choose[i],
-                                                           std=std_choose[i]))
-            f.write("\n")
-        f.write(str(_index[-1]))
+    time_usage = time.time() - start
+    save_results(save_name, metrics_results, fold_list, time_usage, args)
 
 
 if __name__ == '__main__':
@@ -114,7 +99,7 @@ if __name__ == '__main__':
     for i, dataname in enumerate(datanames):
         args.DATA_SET_NAME = dataname
         save_dir = f'results/{args.DATA_SET_NAME}/'
-        save_name = f'{args.DATA_SET_NAME}.txt'
+        save_name = f'{args.DATA_SET_NAME}-1.txt'
         run(device, args, save_dir, save_name)
 
             # Random Grid Search

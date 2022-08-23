@@ -7,16 +7,16 @@ TEST_SPLIT_INDEX = 1
 class Args:
     def __init__(self):
         self.DATA_ROOT = './datasets'
-        self.DATA_SET_NAME = 'Emotions'
-        self.epochs = 100
+        self.DATA_SET_NAME = 'emotions'
+        self.epochs = 50
         self.show_epoch = 1
         self.model_save_epoch = 20
         self.model_save_dir = 'model_save_dir'
-        self.using_lp = False
 
-        self.neighbors_num = 10
+        # self.using_lp = False
+        # self.neighbors_num = 10
         self.no_verbose = True
-        self.using_lp = False  # label propagation for label de-noise
+        # self.using_lp = False  # label propagation for label de-noise
 
         self.is_test_in_train = True
         self.batch_size = 512
@@ -26,8 +26,8 @@ class Args:
         self.opt = 'adam'
         self.lr = 1e-3  # 1e-3 5e-3 6e-4
         self.weight_decay = 1e-5  # 1e-5
-        self.noise_rate = 0.7
-        self.noise_num = 3
+        # self.noise_rate = 0.7
+        # self.noise_num = 3
 
         self.mode = 'train'
         self.residue_sigma = 'random'

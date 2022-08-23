@@ -1,25 +1,34 @@
 from collections import Counter
 
 import numpy as np
+from sklearn.metrics import coverage_error
 
 FMT = '%.4f'
 
 def all_metrics(outputs, pre_labels, true_labels):
-    metrics_name = ['hamming_loss', 'avg_precision', 'one_error', 'ranking_loss', 'coverage', 'macro_f1', 'micro_f1',
-                    'macro_precision', 'micro_precision', 'macro_recall', 'micro_recall']
+    metrics_name = ['hamming_loss', 'avg_pre', 'one_error', 'ranking_loss', 'coverage', 'coverage_gt', 'micro_f1',
+                   'macro_f1', 'micro_precision', 'macro_precision', 'micro_recall', 'macro_recall', 'micro_avg_auc',
+                   'macro_avg_auc', 'subset_accuracy']
 
     hamming_loss = HammingLoss(pre_labels, true_labels)
     avg_precision = AveragePrecision(outputs, true_labels)
     one_error = OneError(outputs, true_labels)
     ranking_loss = RankingLoss(outputs, true_labels)
     coverage = Coverage(outputs, true_labels)
-    macrof1 = MacroF1(pre_labels, true_labels)
-    microf1 = MicroF1(pre_labels, true_labels)
+    # macrof1 = MacroF1(pre_labels, true_labels)
+    # microf1 = MicroF1(pre_labels, true_labels)
     micro_precision, micro_recall, micro_f1, macro_precision, macro_recall, macro_f1 = \
         bipartition_scores(true_labels, pre_labels)
-    # metrics_res = [hamming_loss, avg_precision, one_error, ranking_loss, coverage, macrof1, microf1]
-    metrics_res = [hamming_loss, avg_precision, one_error, ranking_loss, coverage, macro_f1, micro_f1,
-                   macro_precision, micro_precision, macro_recall, micro_recall]
+
+    _coverage_gt = coverage_greater(true_labels, pre_labels, outputs)
+    _f1 = f1(true_labels, pre_labels, outputs)
+    _subset_accuracy = subset_accuracy(true_labels, pre_labels, outputs)
+    _micro_avg_auc = micro_averaging_auc(true_labels, pre_labels, outputs)
+    _macro_avg_auc = macro_averaging_auc(true_labels, pre_labels, outputs)
+
+    metrics_res = [hamming_loss, avg_precision, one_error, ranking_loss, coverage, _coverage_gt, micro_f1,
+                   macro_f1, micro_precision, macro_precision, micro_recall, macro_recall, _micro_avg_auc,
+                   _macro_avg_auc, _subset_accuracy]
     return dict(zip(metrics_name, metrics_res))
 
 def HammingLoss(pre_labels, true_labels):
@@ -28,6 +37,67 @@ def HammingLoss(pre_labels, true_labels):
     hl = miss_label / (m * q)
     return float(FMT % hl)
 
+def coverage_greater(Y, P, O):
+    return coverage_error(Y, O)
+
+def subset_accuracy(Y, P, O):
+    n = (Y.shape[0] + P.shape[0]) // 2
+    return np.sum(np.all((Y > 0.5) == (P > 0.5), 1)) / n
+
+def micro_averaging_auc(Y, P, O):
+    n = (Y.shape[0] + O.shape[0]) // 2
+    l = (Y.shape[1] + O.shape[1]) // 2
+
+    p = 0
+    q = np.sum(Y)
+
+    r, c = np.nonzero(Y)
+    for i, j in zip(r, c):
+        p += np.sum((Y < 0.5) * (O <= O[i, j]))
+
+    return p / (q * (n * l - q))
+
+def macro_averaging_auc(Y, P, O):
+    n = (Y.shape[0] + O.shape[0]) // 2
+    l = (Y.shape[1] + O.shape[1]) // 2
+
+    p = np.zeros(l)
+    q = np.sum(Y, 0)
+
+    r, c = np.nonzero(Y)
+    for i, j in zip(r, c):
+        p[j] += np.sum((Y[ : , j] < 0.5) * (O[ : , j] <= O[i, j]))
+
+    i = (q > 0) * (q < n)
+
+    return np.sum(p[i] / (q[i] * (n - q[i]))) / l
+
+def precision(Y, P, O):
+    n = (Y.shape[0] + P.shape[0]) // 2
+
+    s1 = np.sum(Y, 1)
+    s2 = np.sum(P, 1)
+    ss = np.sum(Y * P, 1)
+
+    i = s2 > 0
+
+    return np.sum(ss[i] / s2[i]) / n
+
+def recall(Y, P, O):
+    n = (Y.shape[0] + P.shape[0]) // 2
+
+    s1 = np.sum(Y, 1)
+    s2 = np.sum(P, 1)
+    ss = np.sum(Y * P, 1)
+
+    i = s1 > 0
+
+    return np.sum(ss[i] / s1[i]) / n
+
+def f1(Y, P, O):
+    p = precision(Y, P, O)
+    r = recall(Y, P, O)
+    return 2 * p * r / (p + r)
 
 def AveragePrecision(outputs, true_labels):
     m, q = true_labels.shape

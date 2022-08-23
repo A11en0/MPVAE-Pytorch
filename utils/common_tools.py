@@ -4,9 +4,11 @@ import random
 
 from scipy.io import loadmat
 import numpy as np
+from config import *
 from sklearn import preprocessing
 from torch.utils.data import Dataset
 import torch
+
 import h5py
 
 from utils.random_noise import random_noise, random_noise_p_r
@@ -82,7 +84,6 @@ def split_data_set_by_idx(features, labels, idx_list, test_split_id, device):
 
     return train_features, train_labels, test_features, test_labels
 
-
 # read data with matlab format by loadmat
 def read_mat_data(file_name, need_zscore=True):
     # since the data is small, we load all data to the memory
@@ -106,6 +107,43 @@ def read_mat_data(file_name, need_zscore=True):
     labels = np.array(labels, dtype=np.float32)
     labels = torch.from_numpy(labels)
     return views_features, labels
+
+def save_results(save_name, metrics_results, fold_list, time_usage, args):
+    rets = np.zeros((Fold_numbers, args.epochs, 15))  # 11 metrics
+    for fold, li_fold in enumerate(fold_list):
+        for i, epoch in enumerate(li_fold):
+            for j, key in enumerate(li_fold[i]):
+                rets[fold][i][j] = li_fold[i][key]
+
+    means = np.mean(rets, axis=0)
+    stds = np.std(rets, axis=0)
+
+    def rerank_rets(means, stds, low_better):
+        idx = 0 if low_better else -1
+        _index = np.argsort(means[:, 0])  # 按照第 0列排序 hamming
+        mean_choose = means[_index][idx]  # 重排序，并取最小值
+        std_choose = stds[_index][idx]
+        print("Best Epoch: ", _index[idx])
+        return mean_choose, std_choose, _index
+
+    re_rank = True
+    if re_rank:
+        mean_choose, std_choose, _index = rerank_rets(means, stds, True)
+    else:
+        mean_choose, std_choose, _index = means[-1], stds[-1], [-1]
+
+    metrics_names = list(metrics_results.keys())
+
+    # Save & Print
+    print("\n------------summary--------------")
+    with open(save_name, "w") as f:
+        for i, _ in enumerate(mean_choose):
+            print("{metric}\t{means:.3f}±{std:.3f}".format(metric=metrics_names[i], means=mean_choose[i],
+                                                           std=std_choose[i]))
+            f.write("{means:.3f}±{std:.3f}".format(means=mean_choose[i], std=std_choose[i]))
+            f.write("\n")
+        f.write("{:.3f}".format(time_usage)+"\n")
+        f.write(str(_index[0]))
 
 def init_random_seed(seed):
     torch.manual_seed(seed)
